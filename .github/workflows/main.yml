@@ -13,8 +13,8 @@ jobs:
 
     - name: Install LiteSpeed
       run: |
-        sudo apt update
-        sudo apt install -y openlitespeed
+        sudo apt update -y
+        sudo apt-get install openlitespeed -y
 
     - name: Configure LiteSpeed for HTTP, HTTPS, SOCKS, and SSL
       run: |
