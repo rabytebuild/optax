@@ -1,0 +1,63 @@
+name: Optax Proxy - LiteSpeed
+
+on:
+  workflow_dispatch:  # This triggers the workflow manually
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Install LiteSpeed
+      run: |
+        sudo apt update && apt upgrade -y
+        sudo apt install -y openlitespeed
+
+    - name: Configure LiteSpeed for HTTP, HTTPS, SOCKS, and SSL
+      run: |
+        # HTTP Configuration
+        sudo echo "Listen 8080" > /etc/litespeed/httpd/conf/httpd.conf
+        sudo echo "<VirtualHost *:8080>" >> /etc/litespeed/httpd/conf/httpd.conf
+        sudo echo "DocumentRoot \"/var/www/html\"" >> /etc/litespeed/httpd/conf/httpd.conf
+        sudo echo "</VirtualHost>" >> /etc/litespeed/httpd/conf/httpd.conf
+        
+        # HTTPS Configuration (example, replace with your SSL configuration)
+        sudo echo "Listen 443" >> /etc/litespeed/httpd/conf/httpd.conf
+        sudo echo "<VirtualHost *:443>" >> /etc/litespeed/httpd/conf/httpd.conf
+        sudo echo "DocumentRoot \"/var/www/html\"" >> /etc/litespeed/httpd/conf/httpd.conf
+        sudo echo "SSLEngine on" >> /etc/litespeed/httpd/conf/httpd.conf
+        sudo echo "SSLCertificateFile \"/path/to/ssl/certificate.crt\"" >> /etc/litespeed/httpd/conf/httpd.conf
+        sudo echo "SSLCertificateKeyFile \"/path/to/ssl/private.key\"" >> /etc/litespeed/httpd/conf/httpd.conf
+        sudo echo "</VirtualHost>" >> /etc/litespeed/httpd/conf/httpd.conf
+        
+        # SOCKS Configuration (example, replace with your SOCKS configuration)
+        sudo echo "<IfModule mod_proxy.c>" >> /etc/litespeed/httpd/conf/httpd.conf
+        sudo echo "ProxyRequests On" >> /etc/litespeed/httpd/conf/httpd.conf
+        sudo echo "ProxyVia On" >> /etc/litespeed/httpd/conf/httpd.conf
+        sudo echo "ProxyTimeout 300" >> /etc/litespeed/httpd/conf/httpd.conf
+        sudo echo "</IfModule>" >> /etc/litespeed/httpd/conf/httpd.conf
+        
+        # SSL Configuration (example, replace with your SSL configuration)
+        sudo echo "Configure SSL settings here" > /etc/ssl/private/ssl.conf
+
+    - name: Start LiteSpeed
+      run: sudo service lsws start
+
+    - name: Install Ngrok
+      run: |
+        curl -s https://ngrok-agent.s3.amazonaws.com/ngrok.asc | sudo tee /etc/apt/trusted.gpg.d/ngrok.asc >/dev/null
+        echo "deb https://ngrok-agent.s3.amazonaws.com buster main" | sudo tee /etc/apt/sources.list.d/ngrok.list
+        sudo apt update
+        sudo apt install -y ngrok
+
+        # Start Ngrok tunnels
+        nohup ngrok authtoken 2Hd7yeF4INCKbg2aP9rGMLnDqBX_5K7WhATjW8eUxS6UoHSRa </dev/null >/dev/null 2>&1 &
+        nohup ngrok http 8080 </dev/null >/dev/null 2>&1 &  # Assuming LiteSpeed listens on port 8080
+        nohup ngrok http 443 </dev/null >/dev/null 2>&1 &  # Assuming LiteSpeed listens on port 443
+        # Add more ngrok http commands for additional endpoints if needed
+
+    
+    # Additional steps can be added for testing or further configuration
